@@ -1,0 +1,51 @@
+#!/bin/bash
+
+
+: '
+    < 80085 >
+
+    [USAGE]
+
+    add spinner file to ~/.bin folder
+        mv spinner ~/.bin
+    give execution permission
+        chmod +x spinner
+    add the following line to your .bashrc file
+        alias cp="~/.bin/spinner cp"
+    copy a big file and see the magic
+
+    Note: I use it with the copy command but you can use it anywhere
+'
+
+#Set timer
+T=$(date +%s)
+
+#Add some color
+. ~/.bin/color
+
+#Animation sprites
+sprite=( "(* )  ( *)" " (* )( *) " " ( *)(* ) " "( *)  (* )" "(* )  ( *)" )
+
+#Print empty line and hide cursor
+printf "\n${COF}"
+
+#Exit function
+function bye { printf "${CON}"; [ -e /proc/$pid ] && kill -9 $pid; exit; }; trap bye INT
+
+#Run our command and get its pid
+"$@" & pid=$!
+
+#Waiting animation
+i=0; while [ -e /proc/$pid ]; do sleep 0.1
+
+    printf "\r${GRN}Please wait... ${YLW}${sprite[$i]}${DEF}"
+    ((i++)); [[ $i = ${#sprite[@]} ]] && i=0
+
+done
+
+#Print time and exit
+T=$(($(date +%s)-$T))
+printf "\n\nTime taken: $(date -u -d @${T} +'%T')\n"
+
+bye
+
