@@ -1,11 +1,58 @@
 """ Optixal's Neovim Init.vim
 
+execute pathogen#infect('~/.config/nvim/bundle/{}')
+
+highlight Pmenu guibg=#347070
+
+
+set nocompatible            " disable compatibility to old-time vi
+set showmatch               " show matching brackets.
+set ignorecase              " case insensitive matching
+" set mouse=v                 " middle-click paste with mouse
+set hlsearch                " highlight search results
+set autoindent              " indent a new line the same amount as the line just typed
+set number                  " add line numbers
+set relativenumber
+set wildmode=longest,list   " get bash-like tab completions
+" set cc=85                   " set an 80 column border for good coding style
+syntax on
+filetype plugin indent on   " allows auto-indenting depending on file type
+set tabstop=4               " number of columns occupied by a tab character
+set expandtab               " converts tabs to white space
+set shiftwidth=4            " width for autoindents
+set softtabstop=4           " see multiple spaces as tabstops so <BS> does the right thing
+set nowrap
+
+
+
+
+" das haskell shit
+let g:haskell_enable_quantification = 1   " to enable highlighting of `forall`
+let g:haskell_enable_recursivedo = 1      " to enable highlighting of `mdo` and `rec`
+let g:haskell_enable_arrowsyntax = 1      " to enable highlighting of `proc`
+let g:haskell_enable_pattern_synonyms = 1 " to enable highlighting of `pattern`
+let g:haskell_enable_typeroles = 1        " to enable highlighting of type roles
+let g:haskell_enable_static_pointers = 1  " to enable highlighting of `static`
+let g:haskell_backpack = 1                " to enable highlighting of backpack keywords
+let g:haskell_classic_highlighting = 1
+let g:haskell_indent_if = 3
+
+" open nvim tree at startup, resize, and focus to code
+autocmd VimEnter * NvimTreeToggle
+autocmd VimEnter * NvimTreeResize 20
+autocmd VimEnter * wincmd l
+" close editor if last window is nerd tree
+autocmd BufEnter * ++nested if winnr('$') == 1 && bufname() == 'NvimTree_' . tabpagenr() | quit | endif
+
 
 """ Vim-Plug
 call plug#begin()
 
 " Core (nvim-lspconfig, nvim-cmp, nvim-telescope, nvim-lualine)
 Plug 'github/copilot.vim'
+Plug 'mrcjkb/haskell-tools.nvim', { 'requires': ['nvim-lua/plenary.nvim', 'nvim-telescope/telescope.nvim'] }
+Plug 'nvim-lua/plenary.nvim'
+Plug 'mfussenegger/nvim-dap'
 Plug 'nvim-tree/nvim-tree.lua'
 Plug 'm4xshen/smartcolumn.nvim'
 Plug 'neovim/nvim-lspconfig'
@@ -45,7 +92,7 @@ Plug 'psf/black', { 'branch': 'stable' }
 Plug 'heavenshell/vim-pydocstring'
 
 " Aesthetics - Colorschemes
-Plug 'dracula/vim', { 'as': 'dracula' }
+" Plug 'dracula/vim', { 'as': 'dracula' }
 Plug 'zaki/zazen'
 Plug 'yuttie/hydrangea-vim'
 
@@ -89,32 +136,33 @@ autocmd FileType journal setlocal shiftwidth=2 tabstop=2 softtabstop=2
 """ Coloring
 
 " Functions and autocmds to run whenever changing colorschemes
-function! TransparentBackground()
-    highlight Normal guibg=NONE ctermbg=NONE
-    highlight LineNr guibg=NONE ctermbg=NONE
-    set fillchars+=vert:\│
-    highlight WinSeparator gui=NONE guibg=NONE guifg=#444444 cterm=NONE ctermbg=NONE ctermfg=gray
-    highlight VertSplit gui=NONE guibg=NONE guifg=#444444 cterm=NONE ctermbg=NONE ctermfg=gray
-endfunction
+" function! TransparentBackground()
+"     highlight Normal guibg=NONE ctermbg=NONE
+"     highlight LineNr guibg=NONE ctermbg=NONE
+"     set fillchars+=vert:\│
+"     highlight WinSeparator gui=NONE guibg=NONE guifg=#444444 cterm=NONE ctermbg=NONE ctermfg=gray
+"     highlight VertSplit gui=NONE guibg=NONE guifg=#444444 cterm=NONE ctermbg=NONE ctermfg=gray
+" endfunction
+
 
 " Use these colors for Pmenu, CmpPmenusBorder and TelescopeBorder when using dracula colorscheme
-function! DraculaTweaks()
-    " Pmenu colors when not using bordered windows
-    highlight Pmenu guibg=#363948
-    highlight PmenuSbar guibg=#363948
-    " Completion/documentation Pmenu border color when using bordered windows
-    highlight link CmpPmenuBorder NonText
-    " Telescope borders
-    highlight link TelescopeBorder Constant
-endfunction
+" function! DraculaTweaks()
+"     " Pmenu colors when not using bordered windows
+"     highlight Pmenu guibg=#363948
+"     highlight PmenuSbar guibg=#363948
+"     " Completion/documentation Pmenu border color when using bordered windows
+"     highlight link CmpPmenuBorder NonText
+"     " Telescope borders
+"     highlight link TelescopeBorder Constant
+" endfunction
 
-augroup MyColors
-    autocmd!
-    autocmd ColorScheme dracula call DraculaTweaks()
-    "autocmd ColorScheme * call TransparentBackground() " uncomment if you are using a translucent terminal and you want nvim to use that
-augroup END
+" augroup MyColors
+"     autocmd!
+"     autocmd ColorScheme dracula call DraculaTweaks()
+"     "autocmd ColorScheme * call TransparentBackground() " uncomment if you are using a translucent terminal and you want nvim to use that
+" augroup END
 
-color dracula
+" color dracula
 set termguicolors
 
 """ Core plugin configuration (vim)
@@ -160,6 +208,7 @@ servers = {
     --'tsserver', -- uncomment for typescript. See https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md for other language servers
 }
 
+require('plenary.async')
 require('lspconfig')
 require('nvim-cmp-config')
 require('telescope-config')
@@ -174,6 +223,7 @@ require("smartcolumn").setup()
 -- disable netrw at the very start of your init.lua (strongly advised)
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
+
 
 -- set termguicolors to enable highlight groups
 vim.opt.termguicolors = true
@@ -191,7 +241,24 @@ require('nvim-tree').setup({
   },
 })
 
+-- haskell
+require('haskell-tools').setup{
+  hls = {
+    on_attach = function(client, bufnr)
+      local opts = vim.tbl_extend('keep', def_opts, { buffer = bufnr, })
+      -- haskell-language-server relies heavily on codeLenses,
+      -- so auto-refresh (see advanced configuration) is enabled by default
+      vim.keymap.set('n', '<space>ca', vim.lsp.codelens.run, opts)
+      vim.keymap.set('n', '<space>hs', ht.hoogle.hoogle_signature, opts)
+      vim.keymap.set('n', '<space>ea', ht.lsp.buf_eval_all, opts)
+    end,
+  },
+}
+
+
+
 EOF
+
 
 """ Custom Functions
 
@@ -236,4 +303,5 @@ nnoremap <leader>fb <cmd>Telescope buffers<cr>
 nnoremap <leader>fh <cmd>Telescope help_tags<cr>
 nnoremap <leader>fc <cmd>Telescope colorscheme<cr>
 nnoremap <leader>f/ <cmd>Telescope current_buffer_fuzzy_find<cr>
+
 
